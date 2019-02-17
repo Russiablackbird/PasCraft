@@ -4,6 +4,7 @@ interface
 
 Uses
   System.Classes,
+  System.SysUtils,
   IdContext,
   IdBuffer,
   IdGlobal,
@@ -21,19 +22,21 @@ implementation
 
 procedure TPacket8.Read(Con: TIdContext);
 var
-  Client: ^TClient;
+  Position: Vector3D;
 begin
-  Client := @TCliContext(Con).Client;
-
   with Con.Connection.IOHandler do
   begin
-    ReadByte;
-    Client.X := ReadInt16();
-    Client.Y := ReadInt16();
-    Client.Z := ReadInt16();
-    Client.Yaw := ReadByte;
-    Client.Pitch := ReadByte;
+    ReadByte; // похуй на этот ID т.к это двигается локальный игрок 255
+    Position.X := ReadInt16();
+    Position.Y := ReadInt16();
+    Position.Z := ReadInt16();
+    Position.Yaw := ReadByte;
+    Position.Pitch := ReadByte;
   end;
+
+  if not CompareMem(@Position, @TCliContext(Con).Client.Pos, SizeOf(Position))
+  then
+    TCliContext(Con).OnChangePos(Position);
 
 end;
 
@@ -43,9 +46,14 @@ var
   OutBuffer: TIdBytes;
 begin
   Buffer := TIdBuffer.Create;
-  Buffer.ExtractToBytes(OutBuffer);
-  TCliContext(Con).SendPacket(8, OutBuffer);
-  Buffer.Free;
+  try
+    Buffer.Write(Data);
+    Buffer.ExtractToBytes(OutBuffer);
+    TCliContext(Con).SendPacket(8, OutBuffer);
+  finally
+    Buffer.Free;
+    SetLength(OutBuffer, 0);
+  end;
 end;
 
 initialization

@@ -69,6 +69,7 @@
         <ILINK_FullDebugInfo>true</ILINK_FullDebugInfo>
         <BCC_DebugLineNumbers>true</BCC_DebugLineNumbers>
         <BCC_SourceDebuggingOn>true</BCC_SourceDebuggingOn>
+        <Debugger_RunParams>pause</Debugger_RunParams>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -96,6 +97,8 @@
         <DCCReference Include="PacketManager.pas"/>
         <DCCReference Include="ClientManager.pas"/>
         <DCCReference Include="Log.pas"/>
+        <DCCReference Include="Packets\Packet_12.pas"/>
+        <DCCReference Include="Packets\Packet_13.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>

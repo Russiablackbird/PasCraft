@@ -40,17 +40,19 @@ var
   Buffer: TIdBuffer;
   OutBuffer: TIdBytes;
 begin
-  Client := @TCliContext(Con).Client;
   Buffer := TIdBuffer.Create;
-  Buffer.Write(UInt8(ServerVersion));
-  Buffer.Write(ServerName.PadRight(64));
-  Buffer.Write(MOTD.PadRight(64));
-  Buffer.Write(UInt8(Client.Op));
-  Buffer.ExtractToBytes(OutBuffer);
+  try
+    Client := @TCliContext(Con).Client;
+    Buffer.Write(UInt8(ServerVersion));
+    Buffer.Write(ServerName.PadRight(64));
+    Buffer.Write(MOTD.PadRight(64));
+    Buffer.Write(UInt8(Client.Op));
+    Buffer.ExtractToBytes(OutBuffer);
+    TCliContext(Con).SendPacket(0, OutBuffer);
+  finally
+    Buffer.Free;
+  end;
 
-  TCliContext(Con).SendPacket(0, OutBuffer);
-
-  Buffer.Free;
 end;
 
 initialization

@@ -30,11 +30,14 @@ var
   OutBuffer: TIdBytes;
 begin
   Buffer := TIdBuffer.Create;
-  Buffer.Write(Data);
-  Buffer.ExtractToBytes(OutBuffer);
-  TCliContext(Con).SendPacket(6, OutBuffer);
-  SetLength(OutBuffer, 0);
-  Buffer.Free;
+  try
+    Buffer.Write(Data);
+    Buffer.ExtractToBytes(OutBuffer);
+    TCliContext(Con).SendPacket(6, OutBuffer);
+  finally
+    Buffer.Free;
+    SetLength(OutBuffer, 0);
+  end;
 end;
 
 initialization

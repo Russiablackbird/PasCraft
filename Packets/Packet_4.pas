@@ -36,6 +36,9 @@ begin
   Buffer.ExtractToBytes(OutBuffer);
   TCliContext(Con).SendPacket(4, OutBuffer);
   Buffer.Free;
+
+  /// надо переделать этот участок
+
 end;
 
 initialization

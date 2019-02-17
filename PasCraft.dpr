@@ -15,28 +15,45 @@ uses
   Packet_6 in 'Packets\Packet_6.pas',
   Packet_8 in 'Packets\Packet_8.pas',
   Packet_14 in 'Packets\Packet_14.pas',
-
   Server in 'Server.pas',
   WorldManager in 'WorldManager.pas',
   PlayerManager in 'PlayerManager.pas',
   PacketManager in 'PacketManager.pas',
   ClientManager in 'ClientManager.pas',
-  Log in 'Log.pas';
+  Log in 'Log.pas',
+  Packet_12 in 'Packets\Packet_12.pas',
+  Packet_13 in 'Packets\Packet_13.pas';
 
 var
   PasServer: TGameServer;
+  cmd: string;
 
 begin
+
+  ReportMemoryLeaksOnShutdown := true;
+
   try
     PasServer := TGameServer.Create;
     PasServer.Start;
-    while True do
+    PasServer.Status := true;
+    while PasServer.Status = true do
     begin
-      sleep(1);
+      // sleep(1);
+
+      Readln(cmd);
+
+      if cmd = 'exit' then
+      begin
+        PasServer.Status := False;
+        PasServer.Stop;
+        PasServer.Free;
+      end;
+
     end;
   except
     on E: Exception do
       Writeln(E.ClassName, ': ', E.Message);
+
   end;
 
 end.

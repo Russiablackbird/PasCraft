@@ -18,12 +18,11 @@ uses
 
   ClientManager,
   PacketManager,
-  WorldManager,
-  Log;
+  WorldManager;
 
 const
   Port = 8888;
-  MaxClient = 100;
+  MaxClient = 255;
   Timeout = 1000;
   ServerName = 'PasCraft';
   ServerVersion: Byte = 7;
@@ -36,6 +35,9 @@ type
     destructor Destroy(); override;
     procedure Start();
     procedure Stop();
+
+  var
+    Status: Boolean;
   private
     procedure OnClientCycle(Con: TIdContext);
     procedure OnConnect(Con: TIdContext);
@@ -56,9 +58,7 @@ var
 begin
 
   PlayerList := TDictionary<string, TClient>.Create;
-
   ClientID := TThreadedQueue<Byte>.Create(256, 2500);
-
   WorldMgr := TWorldManager.Create;
 
   for I := 0 to 254 do
@@ -71,7 +71,7 @@ begin
   TCPServer.DefaultPort := Port;
   TCPServer.Bindings.Add.Port := Port;
   TCPServer.Bindings.Add.IP := '127.0.0.1';
-  TCPServer.ListenQueue := 1;
+  TCPServer.ListenQueue := 10000;
   TCPServer.MaxConnections := MaxClient - 1;
   TCPServer.TerminateWaitTime := Timeout;
   TCPServer.OnConnect := OnConnect;
@@ -83,8 +83,9 @@ end;
 
 destructor TGameServer.Destroy;
 begin
-  TCPServer.StopListening;
-  TCPServer.Active := False;
+  PlayerList.Free;
+  ClientID.Free;
+  WorldMgr.Free;
   TCPServer.Free;
 end;
 
@@ -95,6 +96,8 @@ end;
 
 procedure TGameServer.Stop;
 begin
+  TCPServer.StopListening;
+  TCPServer.Active := False;
   Self.Free;
 end;
 

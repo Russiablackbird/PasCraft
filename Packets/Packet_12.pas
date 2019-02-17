@@ -1,29 +1,30 @@
-unit Packet_2; // Level Initialize
+unit Packet_12; // Despawn Client
 
 interface
 
-Uses System.Classes,
+Uses SysUtils,
+  System.Classes,
   IdContext,
   IdBuffer,
   IdGlobal,
   Server,
-  PacketManager,
-  ClientManager;
+  ClientManager,
+  PacketManager;
 
 type
-  TPacket2 = class(TPacket)
+  TPacket12 = class(TPacket)
     procedure Read(Con: TIdContext); override;
     procedure Write(Con: TIdContext; Data: TIdBytes); override;
   end;
 
 implementation
 
-procedure TPacket2.Read(Con: TIdContext);
+procedure TPacket12.Read(Con: TIdContext);
 begin
 
 end;
 
-procedure TPacket2.Write(Con: TIdContext; Data: TIdBytes);
+procedure TPacket12.Write(Con: TIdContext; Data: TIdBytes);
 var
   Buffer: TIdBuffer;
   OutBuffer: TIdBytes;
@@ -32,7 +33,7 @@ begin
   try
     Buffer.Write(Data);
     Buffer.ExtractToBytes(OutBuffer);
-    TCliContext(Con).SendPacket(2, OutBuffer);
+    TCliContext(Con).SendPacket(12, OutBuffer);
   finally
     Buffer.Free;
     SetLength(OutBuffer, 0);
@@ -41,6 +42,6 @@ end;
 
 initialization
 
-RegisterClass(TPacket2);
+RegisterClass(TPacket12);
 
 end.
