@@ -37,12 +37,8 @@ begin
 end;
 
 procedure TPacket5.Write(Con: TIdContext; Data: TIdBytes);
-var
-  Packet: TPacket;
 begin
-  Packet := TCliContext(Con).GetPacket(6);
-  Packet.Write(Con, Data);
-  Packet.Free;
+
 end;
 
 initialization

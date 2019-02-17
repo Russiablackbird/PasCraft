@@ -117,23 +117,29 @@ var
   LocalClient: TClient;
   Data: TIdBytes;
   Packet: TPacket;
+  Buffer: TIdBuffer;
 begin
+  Buffer := TIdBuffer.Create;
+
   if Mode = 0 then
     BlockType := 0;
 
   Self.Client.ChangeBlock(X, Y, Z, BlockType);
-  SetLength(Data, 7);
 
   for LocalClient in PlayerList.Values do
   begin
-    CopyTIdInt16(Swap(X), Data, 0);
-    CopyTIdInt16(Swap(Y), Data, 2);
-    CopyTIdInt16(Swap(Z), Data, 4);
-    Data[6] := BlockType;
+    Buffer.Write(UInt16(X));
+    Buffer.Write(UInt16(Y));
+    Buffer.Write(UInt16(Z));
+    Buffer.Write(BlockType);
+    Buffer.ExtractToBytes(Data);
     Packet := Self.GetPacket(6);
     Packet.Write(LocalClient.Con, Data);
     Packet.Free;
+    SetLength(Data, 0);
   end;
+  Buffer.Free;
+
 end;
 
 procedure TCliContext.OnChangePos(X, Y, Z: Int16; Yaw, Pitch: Byte);
@@ -149,7 +155,7 @@ procedure TCliContext.OnJoin;
 var
   Packet: TPacket;
 begin
-  if Self.Client.Vers <> 7 then
+  if ServerVersion <> 7 then
   begin
     Raise Exception.Create('This version dont support');
   end;
@@ -157,6 +163,7 @@ begin
   begin
     Raise Exception.Create('Such player is already connected');
   end;
+
   // Server Identification
   Packet := TCliContext(Client.Con).GetPacket(0);
   Packet.Write(Client.Con, nil);
@@ -165,6 +172,7 @@ begin
   Self.OnLoadWorld;
   // Load local player from file
   // Self.LoadFClient(Pointer(Client));
+  Client.Player_ID := ClientID.PopItem;
   Self.OnSpawn;
 end;
 
@@ -177,7 +185,7 @@ var
 begin
   Buffer := TIdBuffer.Create;
 
-  // заспаунимся сами локально в клиенте
+  // Self spawn
   begin
     Buffer.Write(Byte(255));
     Buffer.Write(Client.UserName);
@@ -187,7 +195,23 @@ begin
     Buffer.Write(Client.Yaw);
     Buffer.Write(Client.Pitch);
     Buffer.ExtractToBytes(Data);
+    Packet := Self.GetPacket(7);
+    Packet.Write(Client.Con, Data);
+    Packet.Free;
+    SetLength(Data, 0);
+  end;
 
+  // заспауним остальных пидоров у себя в клиенте
+  for LocalClient in PlayerList.Values do
+  begin
+    Buffer.Write(LocalClient.Player_ID);
+    Buffer.Write(LocalClient.UserName);
+    Buffer.Write(UInt16(LocalClient.X));
+    Buffer.Write(UInt16(LocalClient.Y));
+    Buffer.Write(UInt16(LocalClient.Z));
+    Buffer.Write(LocalClient.Yaw);
+    Buffer.Write(LocalClient.Pitch);
+    Buffer.ExtractToBytes(Data);
     Packet := Self.GetPacket(7);
     Packet.Write(Client.Con, Data);
     Packet.Free;
@@ -205,33 +229,14 @@ begin
     Buffer.Write(Client.Yaw);
     Buffer.Write(Client.Pitch);
     Buffer.ExtractToBytes(Data);
-
     Packet := Self.GetPacket(7);
     Packet.Write(LocalClient.Con, Data);
-    Packet.Free;
-    SetLength(Data, 0);
-
-  end;
-
-  // заспауним пидоров у себя в клиенте
-  for LocalClient in PlayerList.Values do
-  begin
-    Buffer.Write(LocalClient.Player_ID);
-    Buffer.Write(LocalClient.UserName);
-    Buffer.Write(UInt16(LocalClient.X));
-    Buffer.Write(UInt16(LocalClient.Y));
-    Buffer.Write(UInt16(LocalClient.Z));
-    Buffer.Write(LocalClient.Yaw);
-    Buffer.Write(LocalClient.Pitch);
-    Buffer.ExtractToBytes(Data);
-
-    Packet := Self.GetPacket(7);
-    Packet.Write(Client.Con, Data);
     Packet.Free;
     SetLength(Data, 0);
   end;
 
   PlayerList.Add(Client.UserName, Self.Client);
+  Buffer.Free;
 
 end;
 
@@ -255,8 +260,8 @@ begin
     Buffer.Write(Data);
     Buffer.ExtractToBytes(DataBuffer);
     Self.PacketQueue.PushItem(DataBuffer);
-    SetLength(DataBuffer, 0);
   finally
+    SetLength(DataBuffer, 0);
     Buffer.Free;
   end;
 end;
@@ -293,32 +298,28 @@ begin
   GZipData := WorldMgr.CompressChunk;
   while (length(GZipData) > Point) do
   begin
+    SetLength(ChunkData, 1024);
     Percent := round(Point / length(GZipData) * 100);
     if (Point + 1024 < length(GZipData)) then
     begin
-      SetLength(ChunkData, 1024); // +1  percent
       CopyTIdBytes(GZipData, Point, ChunkData, 0, 1024);
       Data.Write(UInt16(1024));
       Data.Write(ChunkData);
       Data.Write(UInt8(Percent));
-      Data.ExtractToBytes(Buffer);
-      Packet.Write(Client.Con, Buffer);
-      SetLength(Buffer, 0);
-      SetLength(ChunkData, 0);
     end
     else
     begin
-      SetLength(ChunkData, 1024);
       CopyTIdBytes(GZipData, Point, ChunkData, 0, length(GZipData) - Point);
       Data.Write(UInt16(1024));
       Data.Write(ChunkData);
       Data.Write(UInt8(100));
-      Data.ExtractToBytes(Buffer);
-      Packet.Write(Client.Con, Buffer);
-      SetLength(Buffer, 0);
-      SetLength(ChunkData, 0);
     end;
+
+    Data.ExtractToBytes(Buffer);
+    Packet.Write(Client.Con, Buffer);
     Point := Point + 1024;
+    SetLength(Buffer, 0);
+    SetLength(ChunkData, 0);
   end;
   Packet.Destroy;
   SetLength(GZipData, 0);

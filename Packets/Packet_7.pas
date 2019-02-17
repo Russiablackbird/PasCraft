@@ -28,11 +28,8 @@ procedure TPacket7.Write(Con: TIdContext; Data: TIdBytes);
 var
   Buffer: TIdBuffer;
   OutBuffer: TIdBytes;
-  // Client: ^TClient;
 begin
   Buffer := TIdBuffer.Create;
-  // Client := @TCliContext(Con).Client;
-
   Buffer.Write(Data);
   Buffer.ExtractToBytes(OutBuffer);
   TCliContext(Con).SendPacket(7, OutBuffer);

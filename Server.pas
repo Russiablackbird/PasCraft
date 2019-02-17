@@ -16,7 +16,6 @@ uses
   IdThreadSafe,
   IdBuffer,
 
-  // PlayerManager,
   ClientManager,
   PacketManager,
   WorldManager,

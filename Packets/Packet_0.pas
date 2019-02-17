@@ -57,8 +57,4 @@ initialization
 
 RegisterClass(TPacket0);
 
-finalization
-
-UnRegisterClass(TPacket0);
-
 end.
